@@ -8,10 +8,10 @@ file, which should exist in the same direcotry as this script.
 """
 
 import json
-from os import path
-import subprocess
 import shlex
+import subprocess
 import sys
+from os import path
 from urllib.request import urlopen
 
 ROOT = path.dirname(path.abspath(__file__))
@@ -27,6 +27,11 @@ def read_configs():
     except json.decoder.JSONDecodeError:
         print('Please provide gitlab configs in json format')
     return configs
+
+
+def shell(command):
+    process = subprocess.Popen(command)
+    process.communicate(input=None)
 
 
 def main():
@@ -52,13 +57,11 @@ def main():
             if path.isdir(repo_path):
                 print(f'Fetching {name}')
                 command = shlex.split(f'git -C {repo_path} fetch')
-                process = subprocess.Popen(command)
-                process.communicate(input=None)
+                shell(command)
             else:
                 print(f'Cloning {name}')
                 command = shlex.split(f'git clone {url} {name}')
-                process = subprocess.Popen(command)
-                process.communicate(input=None)
+                shell(command)
         except Exception as unexpected_exception:
             print(f"Error on {url}: {str(unexpected_exception)}")
     print('Done')
