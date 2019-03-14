@@ -1,6 +1,6 @@
 #!/usr/local/bin/python3.7
 """
-Run all api services in parallel via dotnet run
+Run all dotnet services in parallel via dotnet run
 
 It also accepts command line arguments to filter
 the projects desired to start
@@ -48,13 +48,13 @@ def start_service(service_name):
 
 def main():
     configs = read_configs()
-    apis = configs.get('apis')
+    dotnet_projects = configs.get('dotnet_projects')
     args = sys.argv[1:]
 
     if len(args) > 0:
-        apis = list(filter(lambda x: any([arg in x for arg in args]), apis))
-    for api in apis:
-        start_service(api)
+        dotnet_projects = list(filter(lambda x: any([arg in x for arg in args]), dotnet_projects))
+    for dotnet_project in dotnet_projects:
+        start_service(dotnet_project)
 
 
 if __name__ == '__main__':
