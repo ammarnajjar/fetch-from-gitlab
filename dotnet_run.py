@@ -51,9 +51,10 @@ def main():
     apis = configs.get('apis')
     args = sys.argv[1:]
     for api in apis:
-        if any([arg in api for arg in args]):
+        if len(args) > 0 and any([arg in api for arg in args]):
             start_service(api)
-
+        else:
+            start_service(api)
 
 if __name__ == '__main__':
     main()
