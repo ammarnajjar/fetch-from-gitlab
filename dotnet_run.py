@@ -1,12 +1,16 @@
 #!/usr/local/bin/python3.7
 """
 Run all api services in parallel via dotnet run
+
+It also accepts command line arguments to filter
+the projects desired to start
 """
 
 import glob
 import json
 import shlex
 import subprocess
+import sys
 from multiprocessing import Process
 from os import path
 
@@ -33,16 +37,22 @@ def read_configs():
     return configs
 
 
+def start_service(service_name):
+    repo_path = path.join(path.dirname(path.realpath(__file__)), service_name)
+    for project in glob.iglob(f'{repo_path}/**/*.csproj', recursive=True):
+        if 'test' not in project.lower():
+            title(service_name)
+            job = Process(target=run, args=(project,))
+            job.start()
+
+
 def main():
     configs = read_configs()
     apis = configs.get('apis')
+    args = sys.argv[1:]
     for api in apis:
-        repo_path = path.join(path.dirname(path.realpath(__file__)), api)
-        for project in glob.iglob(f'{repo_path}/**/*.csproj', recursive=True):
-            if 'test' not in project.lower():
-                title(api)
-                job = Process(target=run, args=(project,))
-                job.start()
+        if any([arg in api for arg in args]):
+            start_service(api)
 
 
 if __name__ == '__main__':
