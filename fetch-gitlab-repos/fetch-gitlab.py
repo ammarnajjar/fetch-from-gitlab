@@ -30,8 +30,8 @@ def read_configs():
 
 
 def shell(command):
-    process = subprocess.Popen(command)
-    process.communicate(input=None)
+    cmd = shlex.split(command)
+    return subprocess.check_output(cmd).decode("utf-8").split('\n')[0]
 
 
 def main():
@@ -56,12 +56,16 @@ def main():
             repo_path = path.join(path.dirname(path.realpath(__file__)), name)
             if path.isdir(repo_path):
                 print(f'Fetching {name}')
-                command = shlex.split(f'git -C {repo_path} fetch')
-                shell(command)
+                shell(f'git -C {repo_path} fetch')
+                current_branch = shell(
+                    f'git -C {repo_path} rev-parse --abbrev-ref HEAD --')
+                shell(
+                    f'git -C {repo_path} fetch -u origin {current_branch}:{current_branch}')
+                if (current_branch != 'develop'):
+                    shell(f'git -C {repo_path} fetch origin develop:develop')
             else:
                 print(f'Cloning {name}')
-                command = shlex.split(f'git clone {url} {name}')
-                shell(command)
+                shell(f'git clone {url} {name}')
         except Exception as unexpected_exception:
             print(f"Error on {url}: {str(unexpected_exception)}")
     print('Done')
