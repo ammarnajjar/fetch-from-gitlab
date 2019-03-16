@@ -1,7 +1,3 @@
-# Fetch repos from gitlab
+# Useful Scripts
 
-Using the private token, a python script to clone/fetch all wanted projects
-
-The gitlab url, token should be provided in a config.json file, which should exist in the same direcotry as this script.
-Optionally, an ignore list can be provided, which make a pattern match for repo names to ignore.
-
+This is a collection of scripts, mostly in [python]{https://www.python.org/}, which i use regularly to automate simple tasks.

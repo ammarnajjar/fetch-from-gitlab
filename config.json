@@ -1,9 +1,0 @@
-{
-  "gitlab_url": "e.g.: gitlab.com",
-  "gitlab_token": "e.g: kjhasd8123hasdz123",
-  "ignore_list": ["test", "example"],
-  "dotnet_projects": [
-      "dotnet_pro1",
-      "dotnet_pro2"
-  ]
-}

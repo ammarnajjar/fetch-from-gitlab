@@ -52,7 +52,8 @@ def main():
     args = sys.argv[1:]
 
     if len(args) > 0:
-        dotnet_projects = list(filter(lambda x: any([arg in x for arg in args]), dotnet_projects))
+        dotnet_projects = list(filter(lambda x: any(
+            [arg in x for arg in args]), dotnet_projects))
     for dotnet_project in dotnet_projects:
         start_service(dotnet_project)
 
