@@ -52,36 +52,31 @@ def main():
     args = sys.argv[1:]
     if args:
         all_projects = list(filter(lambda pro: any(
-            [arg in pro for arg in args]),
-            [project.get('name') for project in all_projects]))
+            [arg in pro.get('name') for arg in args]),
+            [project for project in all_projects]))
 
     ignore_list = configs.get('ignore_list')
     if ignore_list:
         all_projects = list(filter(lambda pro: all(
-            [ignored_repo not in pro for ignored_repo in ignore_list]),
-            [project.get('name') for project in all_projects]))
+            [ignored_repo not in pro.get('name') for ignored_repo in ignore_list]),
+            [project for project in all_projects]))
 
     for project in all_projects:
-        try:
-            url = project.get('ssh_url_to_repo')
-            if any([x in url for x in ignore_list]):
-                continue
-            name = project.get('name').replace(' ', '-').replace('.', '-')
-            repo_path = path.join(path.dirname(path.realpath(__file__)), name)
-            if path.isdir(repo_path):
-                print(f'Fetching {name}')
-                shell(f'git -C {repo_path} fetch')
-                current_branch = shell(
-                    f'git -C {repo_path} rev-parse --abbrev-ref HEAD --')
-                shell(
-                    f'git -C {repo_path} fetch -u origin {current_branch}:{current_branch}')
-                if (current_branch != 'develop'):
-                    shell(f'git -C {repo_path} fetch origin develop:develop')
-            else:
-                print(f'Cloning {name}')
-                shell(f'git clone {url} {name}')
-        except Exception as unexpected_exception:
-            print(f"Error on {url}: {str(unexpected_exception)}")
+        url = project.get('ssh_url_to_repo')
+        name = project.get('name').replace(' ', '-').replace('.', '-')
+        repo_path = path.join(path.dirname(path.realpath(__file__)), name)
+        if path.isdir(repo_path):
+            print(f'Fetching {name}')
+            shell(f'git -C {repo_path} fetch')
+            current_branch = shell(
+                f'git -C {repo_path} rev-parse --abbrev-ref HEAD --')
+            shell(
+                f'git -C {repo_path} fetch -u origin {current_branch}:{current_branch}')
+            if (current_branch != 'develop'):
+                shell(f'git -C {repo_path} fetch origin develop:develop')
+        else:
+            print(f'Cloning {name}')
+            shell(f'git clone {url} {name}')
     print('Done')
     sys.exit(0)
 
