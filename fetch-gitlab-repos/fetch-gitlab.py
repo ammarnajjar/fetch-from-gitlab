@@ -2,6 +2,9 @@
 """
 Clone/fetch projects from Gitlab using the private token
 
+The desired repos can be also provided through the argsv
+by passing a part of the repo name
+
 NOTE:
 The gitlab url, token should be provided in a config.json
 file, which should exist in the same direcotry as this script.
@@ -41,11 +44,22 @@ def main():
     if not(gitlab_url and gitlab_token):
         print('Please provide gitlab configs in your config.json')
         sys.exit(1)
-    ignore_list = configs.get('ignore_list')
 
     projects = urlopen(
         f'https://{gitlab_url}/api/v4/projects?membership=1&order_by=path&per_page=1000&private_token={gitlab_token}')
     all_projects = json.loads(projects.read().decode())
+
+    args = sys.argv[1:]
+    if args:
+        all_projects = list(filter(lambda pro: any(
+            [arg in pro for arg in args]),
+            [project.get('name') for project in all_projects]))
+
+    ignore_list = configs.get('ignore_list')
+    if ignore_list:
+        all_projects = list(filter(lambda pro: all(
+            [ignored_repo not in pro for ignored_repo in ignore_list]),
+            [project.get('name') for project in all_projects]))
 
     for project in all_projects:
         try:
