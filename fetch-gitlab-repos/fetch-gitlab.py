@@ -14,6 +14,7 @@ import json
 import shlex
 import subprocess
 import sys
+from collections import defaultdict
 from os import path
 from urllib.request import urlopen
 
@@ -69,6 +70,7 @@ def main():
             [ignored_repo not in pro.get('name') for ignored_repo in ignore_list]),
             [project for project in all_projects]))
 
+    summery_info = defaultdict()
     for project in all_projects:
         url = project.get('ssh_url_to_repo')
         name = project.get('name').replace(' ', '-').replace('.', '-')
@@ -79,18 +81,24 @@ def main():
             remote_banches = shell(f'git -C {repo_path} ls-remote --heads')
             current_branch = shell(
                 f'git -C {repo_path} rev-parse --abbrev-ref HEAD --')
+            summery_info.update({name: current_branch})
             if (f'refs/heads/{current_branch}' in remote_banches):
                 shell(
                     f'git -C {repo_path} fetch -u origin {current_branch}:{current_branch}')
             else:
-                print_red(f'{current_branch} is removed from remote')
+                print_red(f'{current_branch} does not exist on remote')
 
             if ('refs/heads/develop' in remote_banches and current_branch != 'develop'):
                 shell(f'git -C {repo_path} fetch origin develop:develop')
         else:
-            print(f'Cloning {name}')
+            print_green(f'Cloning {name}')
             shell(f'git clone {url} {name}')
-    print('Done')
+
+    print('==============')
+    print_green('Repos Summery:')
+    for repo_name, current_branch in summery_info.items():
+        print_red(f'{repo_name} => {current_branch}')
+
     sys.exit(0)
 
 
