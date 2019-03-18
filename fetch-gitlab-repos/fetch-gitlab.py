@@ -15,13 +15,15 @@ import shlex
 import subprocess
 import sys
 from collections import defaultdict
+from multiprocessing import Manager, Pool
 from os import path
+from typing import Dict
 from urllib.request import urlopen
 
 ROOT = path.dirname(path.abspath(__file__))
 
 
-def read_configs():
+def read_configs() -> Dict[str, str]:
     configs = {}
     try:
         with open(f'{ROOT}/config.json', 'r') as config_file:
@@ -33,20 +35,44 @@ def read_configs():
     return configs
 
 
-def print_green(text):
+def print_green(text: str) -> None:
     print(f'\033[92m* {text}\033[0m')
 
 
-def print_red(text):
+def print_yellow(text: str) -> None:
     print(f'\033[93m* {text}\033[0m')
 
 
-def shell(command):
+def shell(command: str) -> str:
     cmd = shlex.split(command)
     return subprocess.check_output(cmd).decode("utf-8").split('\n')[0]
 
 
-def main():
+def fetch_repo(name: str, summery_info: Dict[str, str]) -> None:
+    repo_path = path.join(path.dirname(path.realpath(__file__)), name)
+    if path.isdir(repo_path):
+        print_green(f'Fetching {name}')
+        shell(f'git -C {repo_path} fetch')
+        remote_banches = shell(f'git -C {repo_path} ls-remote --heads')
+        current_branch = shell(
+            f'git -C {repo_path} rev-parse --abbrev-ref HEAD --')
+        if (f'refs/heads/{current_branch}' in remote_banches):
+            shell(
+                f'git -C {repo_path} fetch -u origin {current_branch}:{current_branch}')
+        else:
+            print_yellow(f'{current_branch} does not exist on remote')
+
+        if ('refs/heads/develop' in remote_banches and current_branch != 'develop'):
+            shell(f'git -C {repo_path} fetch origin develop:develop')
+    else:
+        print_green(f'Cloning {name}')
+        shell(f'git clone {url} {name}')
+        current_branch = shell(
+            f'git -C {repo_path} rev-parse --abbrev-ref HEAD --')
+    summery_info.update({name: current_branch})
+
+
+def main() -> None:
     configs = read_configs()
     gitlab_url = configs.get('gitlab_url')
     gitlab_token = configs.get('gitlab_token')
@@ -70,36 +96,21 @@ def main():
             [ignored_repo not in pro.get('name') for ignored_repo in ignore_list]),
             [project for project in all_projects]))
 
-    summery_info = defaultdict()
+    manager = Manager()
+    summery_info = manager.dict()
+
+    pool = Pool(processes=8)
     for project in all_projects:
         url = project.get('ssh_url_to_repo')
         name = project.get('name').replace(' ', '-').replace('.', '-')
-        repo_path = path.join(path.dirname(path.realpath(__file__)), name)
-        if path.isdir(repo_path):
-            print_green(f'Fetching {name}')
-            shell(f'git -C {repo_path} fetch')
-            remote_banches = shell(f'git -C {repo_path} ls-remote --heads')
-            current_branch = shell(
-                f'git -C {repo_path} rev-parse --abbrev-ref HEAD --')
-            summery_info.update({name: current_branch})
-            if (f'refs/heads/{current_branch}' in remote_banches):
-                shell(
-                    f'git -C {repo_path} fetch -u origin {current_branch}:{current_branch}')
-            else:
-                print_red(f'{current_branch} does not exist on remote')
-
-            if ('refs/heads/develop' in remote_banches and current_branch != 'develop'):
-                shell(f'git -C {repo_path} fetch origin develop:develop')
-        else:
-            print_green(f'Cloning {name}')
-            shell(f'git clone {url} {name}')
+        pool.apply_async(fetch_repo, args=(name, summery_info))
+    pool.close()
+    pool.join()
 
     print('==============')
     print_green('Repos Summery:')
     for repo_name, current_branch in summery_info.items():
-        print_red(f'{repo_name} => {current_branch}')
-
-    sys.exit(0)
+        print_yellow(f'{repo_name} => {current_branch}')
 
 
 if __name__ == '__main__':
