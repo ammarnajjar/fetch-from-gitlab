@@ -32,6 +32,14 @@ def read_configs():
     return configs
 
 
+def print_green(text):
+    print(f'\033[92m* {text}\033[0m')
+
+
+def print_red(text):
+    print(f'\033[93m* {text}\033[0m')
+
+
 def shell(command):
     cmd = shlex.split(command)
     return subprocess.check_output(cmd).decode("utf-8").split('\n')[0]
@@ -66,13 +74,18 @@ def main():
         name = project.get('name').replace(' ', '-').replace('.', '-')
         repo_path = path.join(path.dirname(path.realpath(__file__)), name)
         if path.isdir(repo_path):
-            print(f'Fetching {name}')
+            print_green(f'Fetching {name}')
             shell(f'git -C {repo_path} fetch')
+            remote_banches = shell(f'git -C {repo_path} ls-remote --heads')
             current_branch = shell(
                 f'git -C {repo_path} rev-parse --abbrev-ref HEAD --')
-            shell(
-                f'git -C {repo_path} fetch -u origin {current_branch}:{current_branch}')
-            if (current_branch != 'develop'):
+            if (f'refs/heads/{current_branch}' in remote_banches):
+                shell(
+                    f'git -C {repo_path} fetch -u origin {current_branch}:{current_branch}')
+            else:
+                print_red(f'{current_branch} is removed from remote')
+
+            if ('refs/heads/develop' in remote_banches and current_branch != 'develop'):
                 shell(f'git -C {repo_path} fetch origin develop:develop')
         else:
             print(f'Cloning {name}')
