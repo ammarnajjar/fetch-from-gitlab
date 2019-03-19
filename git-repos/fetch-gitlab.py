@@ -89,14 +89,12 @@ def main() -> None:
     args = sys.argv[1:]
     if args:
         all_projects = list(filter(lambda pro: any(
-            [arg in pro.get('name') for arg in args]),
-            [project for project in all_projects]))
+            [arg in pro.get('name') for arg in args]), all_projects))
 
     ignore_list = configs.get('ignore_list')
     if ignore_list:
         all_projects = list(filter(lambda pro: all(
-            [ignored_repo not in pro.get('name') for ignored_repo in ignore_list]),
-            [project for project in all_projects]))
+            [ignored_repo not in pro.get('name') for ignored_repo in ignore_list]), all_projects))
 
     manager = Manager()
     summery_info = manager.dict()
