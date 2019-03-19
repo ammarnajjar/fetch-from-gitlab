@@ -14,6 +14,7 @@ import json
 import shlex
 import subprocess
 import sys
+import time
 from collections import defaultdict
 from multiprocessing import Manager, Pool
 from os import path
@@ -73,6 +74,7 @@ def fetch_repo(name: str, summery_info: Dict[str, str]) -> None:
 
 
 def main() -> None:
+    start = time.time()
     configs = read_configs()
     gitlab_url = configs.get('gitlab_url')
     gitlab_token = configs.get('gitlab_token')
@@ -107,8 +109,9 @@ def main() -> None:
     pool.close()
     pool.join()
 
+    end = time.time()
     print('==============')
-    print_green('Repos Summery:')
+    print_green(f'Summery: (fetched in {(end - start):.2f} seconds)')
     for repo_name, current_branch in summery_info.items():
         print_yellow(f'{repo_name} => {current_branch}')
 
