@@ -33,6 +33,10 @@ def print_green(text: str) -> None:
     print(f'\033[92m* {text}\033[0m')
 
 
+def print_red(text: str) -> None:
+    print(f'\033[91m* {text}\033[0m')
+
+
 def print_yellow(text: str) -> None:
     print(f'\033[93m* {text}\033[0m')
 
@@ -46,25 +50,37 @@ def shell(command: str) -> str:
     return '\n'.join(output_lines)
 
 
-def get_branches(repo_path) -> str:
-    return shell(f'git -C {repo_path} branch -a')
+def hard_reset(repo_path) -> None:
+    print_yellow(shell(f'git -C {repo_path} reset --hard'))
+
+
+def get_branches(repo_path) -> None:
+    print(shell(f'git -C {repo_path} branch -a'))
 
 
 @timeit(print_yellow)
 def main() -> None:
+    reset_mode = False
     repos = []
     for repo in glob.iglob(f'{ROOT}/**/.git', recursive=True):
         repo_path = path.abspath(path.join(repo, pardir))
         repos.append(repo_path)
 
     args = sys.argv[1:]
+    if 'reset' in args:
+        del(args[args.index('reset')])
+        reset_mode = True
+        print_red('Reset mode enabled')
+
     if args:
         repos = list(filter(lambda repo: any(
             [arg in repo for arg in args]), [path.basename(repo) for repo in repos]))
 
     for repo_path in repos:
         print_green(repo_path)
-        print(get_branches(repo_path))
+        if reset_mode:
+            hard_reset(repo_path)
+        get_branches(repo_path)
 
 
 if __name__ == '__main__':
