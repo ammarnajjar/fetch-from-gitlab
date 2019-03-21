@@ -24,6 +24,19 @@ from urllib.request import urlopen
 ROOT = path.dirname(path.abspath(__file__))
 
 
+def timeit(callback):
+    def wrapper(func):
+        def inner(*args, **kwargs):
+            start = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+            time_elapsed = end - start
+            callback(f'Time needed = {time_elapsed:.2f} seconds.')
+            return result
+        return inner
+    return wrapper
+
+
 def read_configs() -> Dict[str, str]:
     configs = {}
     try:
@@ -73,8 +86,8 @@ def fetch_repo(name: str, summery_info: Dict[str, str]) -> None:
     summery_info.update({name: current_branch})
 
 
+@timeit(print_green)
 def main() -> None:
-    start = time.time()
     configs = read_configs()
     gitlab_url = configs.get('gitlab_url')
     gitlab_token = configs.get('gitlab_token')
@@ -107,9 +120,8 @@ def main() -> None:
     pool.close()
     pool.join()
 
-    end = time.time()
     print('==============')
-    print_green(f'Summery: (fetched in {(end - start):.2f} seconds)')
+    print_green('Summery:')
     for repo_name, current_branch in summery_info.items():
         print_yellow(f'{repo_name} => {current_branch}')
 

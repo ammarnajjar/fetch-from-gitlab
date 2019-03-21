@@ -16,6 +16,19 @@ from os import pardir, path
 ROOT = path.dirname(path.abspath(__file__))
 
 
+def timeit(callback):
+    def wrapper(func):
+        def inner(*args, **kwargs):
+            start = time.time()
+            result = func(*args, **kwargs)
+            end = time.time()
+            time_elapsed = end - start
+            callback(f'Time needed = {time_elapsed:.2f} seconds.')
+            return result
+        return inner
+    return wrapper
+
+
 def print_green(text: str) -> None:
     print(f'\033[92m* {text}\033[0m')
 
@@ -37,9 +50,8 @@ def get_branches(repo_path) -> str:
     return shell(f'git -C {repo_path} branch -a')
 
 
+@timeit(print_yellow)
 def main() -> None:
-    start = time.time()
-
     repos = []
     for repo in glob.iglob(f'{ROOT}/**/.git', recursive=True):
         repo_path = path.abspath(path.join(repo, pardir))
@@ -53,9 +65,6 @@ def main() -> None:
     for repo_path in repos:
         print_green(repo_path)
         print(get_branches(repo_path))
-
-    end = time.time()
-    print_yellow(f'Done in {(end - start):.2f} seconds')
 
 
 if __name__ == '__main__':
